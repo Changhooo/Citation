@@ -1,0 +1,181 @@
+:root {
+  font-family: "Microsoft YaHei", system-ui, sans-serif;
+  color: #172126;
+  background: #f6f7f2;
+}
+
+body {
+  margin: 0;
+}
+
+.topbar {
+  align-items: center;
+  background: #1d2a2d;
+  color: #edf3ee;
+  display: flex;
+  gap: 18px;
+  padding: 14px 24px;
+}
+
+.brand {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.panel {
+  background: #fff;
+  border: 1px solid #dfe3dc;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  padding: 16px;
+}
+
+.title-row, .form-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.form-row input {
+  flex: 1;
+}
+
+.compact {
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+.compact input {
+  max-width: 360px;
+}
+
+input, button {
+  border: 1px solid #b7c0b5;
+  border-radius: 8px;
+  font: inherit;
+  padding: 9px 11px;
+}
+
+textarea {
+  border: 1px solid #d5dbd2;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font: inherit;
+  min-height: 110px;
+  padding: 8px;
+  width: 100%;
+}
+
+button {
+  background: #2f6f73;
+  color: #fff;
+  cursor: pointer;
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 14px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+th, td {
+  border-bottom: 1px solid #e3e6df;
+  padding: 9px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pdf-cell {
+  min-width: 76px;
+  white-space: nowrap;
+}
+
+.pdf-cell a {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.15;
+}
+
+.pdf-cell span {
+  color: #166236;
+  font-size: 12px;
+}
+
+th {
+  background: #f3f5ef;
+  color: #455358;
+}
+
+.badge {
+  background: #e8eee8;
+  border-radius: 999px;
+  display: inline-flex;
+  padding: 4px 9px;
+}
+
+.ok {
+  background: #e1f2e3;
+  color: #166236;
+}
+
+.notice {
+  background: #eef5f6;
+  border: 1px solid #bad2d6;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.muted {
+  color: #687477;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+}
+
+.actions a {
+  background: #fff;
+  border: 1px solid #b7c0b5;
+  border-radius: 8px;
+  color: #1d2a2d;
+  padding: 8px 10px;
+  text-decoration: none;
+}
+
+.upload-box {
+  align-items: center;
+  border: 1px dashed #b7c0b5;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  margin: 10px 0;
+  padding: 10px;
+}
+
+.upload-box label {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.evidence {
+  max-width: 520px;
+}
+
+.evidence p {
+  margin: 0 0 6px;
+}

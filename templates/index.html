@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <h1>新建任务</h1>
+  <form method="post" action="/tasks" class="form-row">
+    <input name="query" value="CORE: Cooperative Reconstruction for Multi-Agent Perception" placeholder="论文题目 A" required>
+    <input name="scholar_mirror" value="{{ default_mirror }}" placeholder="Scholar 镜像 URL" required>
+    <button type="submit">创建任务</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>任务列表</h2>
+  <table>
+    <thead>
+      <tr><th>任务</th><th>状态</th><th>镜像</th><th>更新时间</th></tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+      <tr>
+        <td><a href="/tasks/{{ task.id }}">{{ task.name }}</a></td>
+        <td><span class="badge">{{ task.status }}</span></td>
+        <td>{{ task.scholar_mirror }}</td>
+        <td>{{ task.updated_at }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}
+

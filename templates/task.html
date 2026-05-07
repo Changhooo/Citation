@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="title-row">
+    <div>
+      <h1>{{ task.name }}</h1>
+      <p>{{ task.query }}</p>
+    </div>
+    <span class="badge">{{ task.status }}</span>
+  </div>
+  {% if task.message %}
+  <p class="notice">{{ task.message }}</p>
+  {% endif %}
+  {% if task.needs_user_action %}
+  <div class="notice warning">
+    当前需要人工处理镜像站验证。请在弹出的 Scholar 浏览器窗口完成验证；完成后回到这里再次点击“在 Scholar 镜像搜索”。
+  </div>
+  {% endif %}
+  <p>镜像：{{ task.scholar_mirror }}</p>
+  <p>被引用次数：{{ task.cited_by_count or 0 }}；当前页：{{ task.current_page or 0 }}</p>
+  <form method="post" action="/tasks/{{ task.id }}/mirror" class="form-row compact">
+    <input name="scholar_mirror" value="{{ task.scholar_mirror }}" placeholder="Scholar 镜像，例如 https://sc.panda985.com/">
+    <button type="submit">切换镜像并重新搜索</button>
+  </form>
+  <form method="post" action="/tasks/{{ task.id }}/override-cites" class="form-row compact">
+    <input name="cites_id" placeholder="仅用于当前镜像的 cited-by ID">
+    <input name="cited_by_count" type="number" min="0" value="{{ task.cited_by_count or 0 }}">
+    <button type="submit">修正 cited-by</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>1. 搜索并确认论文 A</h2>
+  <form method="post" action="/tasks/{{ task.id }}/search">
+    <button type="submit">在 Scholar 镜像搜索</button>
+  </form>
+  <table>
+    <thead><tr><th>标题</th><th>作者/来源</th><th>年份</th><th>被引用</th><th>PDF</th><th>操作</th></tr></thead>
+    <tbody>
+      {% for item in candidates %}
+      <tr>
+        <td>{{ item.title }}</td>
+        <td>{{ item.authors_text }}</td>
+        <td>{{ item.year or "" }}</td>
+        <td>{{ item.cited_by_count }}</td>
+        <td class="pdf-cell">{% if item.pdf_url %}<a href="/tasks/{{ task.id }}/pdf/{{ item.id }}">PDF{% if item.id in pdf_assets %}<span>本地</span>{% endif %}</a>{% endif %}</td>
+        <td>
+          {% if task.target_result_id == item.id %}
+          <span class="badge ok">已确认</span>
+          {% else %}
+          <form method="post" action="/tasks/{{ task.id }}/confirm">
+            <input type="hidden" name="result_id" value="{{ item.id }}">
+            <button type="submit">确认</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>2. 获取 B 并生成 C</h2>
+  {% if task.status == "needs_large_collection_confirm" %}
+  <form method="post" action="/tasks/{{ task.id }}/collect-b">
+    <input type="hidden" name="confirm_large" value="yes">
+    <button type="submit">确认采集超过 100 篇</button>
+  </form>
+  {% else %}
+  <form method="post" action="/tasks/{{ task.id }}/collect-b">
+    <button type="submit">采集引用论文 B</button>
+  </form>
+  {% endif %}
+  <form method="post" action="/tasks/{{ task.id }}/build-c">
+    <button type="submit">按 Top 10% 生成 C</button>
+  </form>
+  <p>B 数量：{{ citations|length }}</p>
+  <table>
+    <thead><tr><th>标题</th><th>作者/来源</th><th>年份</th><th>被引用</th><th>PDF</th><th>页码</th></tr></thead>
+    <tbody>
+      {% for item in citations %}
+      <tr>
+        <td>{{ item.title }}</td>
+        <td>{{ item.authors_text }}</td>
+        <td>{{ item.year or "" }}</td>
+        <td>{{ item.cited_by_count }}</td>
+        <td class="pdf-cell">{% if item.pdf_url %}<a href="/tasks/{{ task.id }}/pdf/{{ item.id }}">PDF{% if item.id in pdf_assets %}<span>本地</span>{% endif %}</a>{% else %}<span class="muted">待上传</span>{% endif %}</td>
+        <td>{{ item.page_number }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>3. 高引用 C 与作者头衔筛查</h2>
+  <p>C 数量：{{ candidate_c|length }}</p>
+  <form method="post" action="/tasks/{{ task.id }}/screen-authors">
+    <button type="submit">联网搜索 C 作者 Fellow/院士证据</button>
+  </form>
+  <p class="muted">C 只表示高引用候选；是否为 Fellow/院士必须看下方 URL 证据，不能由引用量推出。</p>
+  <table>
+    <thead><tr><th>标题</th><th>年份</th><th>被引用</th><th>PDF</th><th>进入 C 的理由</th></tr></thead>
+    <tbody>
+      {% for item in candidate_c %}
+      <tr>
+        <td>{{ item.title }}</td>
+        <td>{{ item.year or "" }}</td>
+        <td>{{ item.cited_by_count }}</td>
+        <td class="pdf-cell">{% if item.id in pdf_assets %}<a href="/tasks/{{ task.id }}/pdf/{{ item.id }}">PDF<span>本地</span></a>{% else %}<span class="muted">待上传</span>{% endif %}</td>
+        <td>{{ candidate_c_reasons.get(item.id, "待 Fellow/院士证据补充") }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <h3>Fellow/院士证据</h3>
+  <table>
+    <thead><tr><th>作者</th><th>头衔类型</th><th>置信度</th><th>状态</th><th>URL 证据</th><th>证据片段</th></tr></thead>
+    <tbody>
+      {% for ev in author_evidence %}
+      <tr>
+        <td>{{ ev.author_name }}</td>
+        <td>{{ ev.title_type }}</td>
+        <td>{{ "%.2f"|format(ev.confidence or 0) }}</td>
+        <td><span class="badge">{{ ev.status }}</span></td>
+        <td><a href="{{ ev.evidence_url }}" target="_blank">打开证据</a></td>
+        <td>{{ ev.evidence_snippet }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>4. PDF 引用抽取</h2>
+  <form method="post" action="/tasks/{{ task.id }}/upload-pdfs" enctype="multipart/form-data" class="upload-box">
+    <label>
+      批量上传 PDF
+      <input type="file" name="files" accept="application/pdf,.pdf" multiple>
+    </label>
+    <button type="submit">上传并自动匹配</button>
+  </form>
+  <form method="post" action="/tasks/{{ task.id }}/upload-pdfs" enctype="multipart/form-data" class="upload-box">
+    <label>
+      上传文件夹
+      <input type="file" name="files" accept="application/pdf,.pdf" multiple webkitdirectory directory>
+    </label>
+    <button type="submit">上传文件夹并自动匹配</button>
+  </form>
+  <p class="muted">请尽量用论文标题作为 PDF 文件名。高置信度自动绑定；低置信度会保存为待人工确认。</p>
+  <form method="post" action="/tasks/{{ task.id }}/extract-contexts">
+    <button type="submit">抽取 C 的引用上下文并判断正负中</button>
+  </form>
+  <p>当前已抽取上下文：{{ contexts|length }} 条</p>
+</section>
+
+<section class="panel">
+  <h2>5. 引用证据与材料段落</h2>
+  <table>
+    <thead><tr><th>论文</th><th>页码</th><th>判断</th><th>证据原文</th><th>理由与材料</th></tr></thead>
+    <tbody>
+      {% for ctx in contexts %}
+      {% set paper = (citations | selectattr("id", "equalto", ctx.result_id) | list | first) %}
+      <tr>
+        <td>{{ paper.title if paper else ctx.result_id }}</td>
+        <td>{{ ctx.page or "" }}</td>
+        <td><span class="badge">{{ ctx.sentiment }}</span><br>{{ "%.2f"|format(ctx.confidence or 0) }}</td>
+        <td>
+          <div class="evidence">
+            <p class="muted">{{ ctx.before_sentence }}</p>
+            <p><strong>{{ ctx.hit_sentence }}</strong></p>
+            <p class="muted">{{ ctx.after_sentence }}</p>
+          </div>
+        </td>
+        <td>
+          <p>{{ ctx.reason_zh }}</p>
+          <textarea readonly>{{ ctx.material_zh }}</textarea>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="panel">
+  <h2>6. 导出</h2>
+  <div class="actions">
+    <a href="/tasks/{{ task.id }}/export/json" target="_blank">导出 JSON</a>
+    <a href="/tasks/{{ task.id }}/export/csv" target="_blank">导出 CSV</a>
+    <a href="/tasks/{{ task.id }}/export/zip" target="_blank">导出 ZIP</a>
+  </div>
+</section>
+{% endblock %}

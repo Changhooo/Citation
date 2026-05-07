@@ -1,0 +1,9 @@
+[project]
+name = "citationclaw"
+version = "0.1.0"
+description = "Local semi-automatic Scholar mirror citation stance analysis tool"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
